@@ -3,7 +3,6 @@ import numpy as np
 from pyrr import Vector3
 from OpenGL.GL import *
 from OpenGL.GL import shaders
-from .profiler import PROFILER
 from . import util
 from .gl_util import *
 
@@ -98,16 +97,13 @@ class NBodySimulation(object):
         Arguments:
             dt: float in (0, inf), time in seconds since last update
         """
-        PROFILER.begin('update')
 
         glUseProgram(self.shader)
 
-        PROFILER.begin('update.uniforms')
         # update variable uniforms, number of particles and timestep
         glUniform1ui(self.num_particles_loc, self.num_particles)
         glUniform1f(self.dt_loc, dt)
 
-        PROFILER.begin('update.shader')
         # bind particle data buffer to shader buffer 0
         glBindBufferBase(self.particles_ssbo.target, 0, self.particles_ssbo._buf_id)
         # compute shader will calculate gravity forces and update particle data
@@ -119,5 +115,3 @@ class NBodySimulation(object):
 
         # wait for compute shader to finish
         gl_sync()
-
-        PROFILER.end('update')

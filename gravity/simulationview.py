@@ -14,7 +14,6 @@ from PyQt5.QtCore import Qt, QSize, QTimer
 from PyQt5.QtWidgets import QOpenGLWidget
 
 from .sim import NBodySimulation
-from .profiler import PROFILER
 from . import util
 from .gl_util import *
 
@@ -141,7 +140,6 @@ class SimulationView(QOpenGLWidget):
         dt = t - self.last_update_time
         self.last_update_time = t
 
-        PROFILER.begin()
 
         # only update simulation if not paused
         if not self.paused:
@@ -149,22 +147,12 @@ class SimulationView(QOpenGLWidget):
 
         super().update()
 
-        PROFILER.end()
-
-        # check if it's been profiler_print_interval seconds since last profiler print
-        if t - self.last_profiler_print_time >= self.profiler_print_interval:
-            # don't bother printing if paused
-            if not self.paused:
-                PROFILER.print_stages()
-            PROFILER.reset()
-            self.last_profiler_print_time = t
 
     def paintGL(self):
         """
         Overrides QOpenGLWidget.paintGL
         Called when OpenGL is ready to paint a single frame
         """
-        PROFILER.begin('render')
 
         # clear to black
         glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -173,13 +161,11 @@ class SimulationView(QOpenGLWidget):
         glUseProgram(self.shader)
         glBindVertexArray(self.particles_vao)
 
-        PROFILER.begin('render.camera')
         # update camera and send camera matricies to shader
         self.camera.update()
         glUniformMatrix4fv(self.view_loc, 1, GL_TRUE, self.camera.view.astype(np.float32))
         glUniformMatrix4fv(self.proj_loc, 1, GL_TRUE, self.camera.proj.astype(np.float32))
 
-        PROFILER.begin('render.sort')
         # sort particles by distance from the camera so they render in the proper order
         # particles closest to the camera should be drawn last
         p = self.sim.particles_ssbo.data
@@ -192,7 +178,6 @@ class SimulationView(QOpenGLWidget):
         # p[:] = ... fills array in place
         p[:] = p[np.argsort(-np.sum(np.square(p[:]['position'] - self.camera.eye), axis=1))]
 
-        PROFILER.begin('render.draw')
         # instanced rendering
         # this draws the same set of verticies for each particle,
         # much faster and more memory efficient than supplying verticies for each particle
@@ -203,7 +188,6 @@ class SimulationView(QOpenGLWidget):
         glBindVertexArray(0)
         glUseProgram(0)
 
-        PROFILER.end('render')
 
     def resizeGL(self, width, height):
         """
