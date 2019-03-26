@@ -24,7 +24,7 @@ void main() {
         hue = log(frag_mass) / log(15.0);                                       // hue based on mass
     }
     else if (color_mode == 1) {
-        hue = length(frag_velocity) * 0.05;                                     // hue based on velocity
+        //hue = length(frag_velocity) * 0.05;                                     // hue based on velocity
     }
     color = vec4(hsv2rgb(vec3(hue, 1.0, 1.0)), alpha);
 }
