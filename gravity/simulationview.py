@@ -19,24 +19,18 @@ from .gl_util import *
 
 
 class SimulationView(QOpenGLWidget):
-    """
-    Qt Widget that runs and displays the N-body simulation.
-    """
-
-    fps = 60 # target FPs
-    profiler_print_interval = 1.0 # seconds between printing profiler info
+    fps = 60
+    profiler_print_interval = 1.0
 
     def __init__(self, parent):
         super().__init__(parent)
 
-        # focus widget for keyboard controls
         self.setFocusPolicy(Qt.StrongFocus)
+        # focus widget for keyboard controls
         self.setFocus(True)
 
-        # default size
         self.size = QSize(800, 500)
 
-        # setup camera
         self.camera = OrbitCamera(
             distance=100.0,
             azimuth=0.0,
@@ -47,24 +41,19 @@ class SimulationView(QOpenGLWidget):
             far=1000.0)
 
     def sizeHint(self):
-        """
-        Overrides QWidget.sizeHint
-        """
+        """Overwriting QWidget.sizeHint"""
         return self.size
 
     def initializeGL(self):
-        print('Initializing...')
 
         print_gl_version()
-        print('Initializing sim')
+        print('Staring sim')
         self.sim = NBodySimulation()
 
-        print('Setting OpenGL options')
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glBlendEquation(GL_FUNC_ADD)
 
-        print('Compiling render shaders')
         with open(os.path.join(os.path.dirname(__file__), 'particle.vert'), 'r') as f:
             vshader = shaders.compileShader(f.read(), GL_VERTEX_SHADER)
         with open(os.path.join(os.path.dirname(__file__), 'particle.frag'), 'r') as f:
@@ -72,26 +61,21 @@ class SimulationView(QOpenGLWidget):
         self.shader = shaders.compileProgram(vshader, fshader)
         glUseProgram(self.shader)
 
-        print('Mapping uniforms')
         self.view_loc = glGetUniformLocation(self.shader, 'view')
         self.proj_loc = glGetUniformLocation(self.shader, 'proj')
 
-        # set constant uniform values
         glUniform1f(glGetUniformLocation(self.shader, 'collision_overlap'), self.sim.collision_overlap)
         glUniform1ui(glGetUniformLocation(self.shader, 'color_mode'), 1)
 
-        print('Generating VAO')
         self.particles_vao = glGenVertexArrays(1)
         glBindVertexArray(self.particles_vao)
 
-        print('Generating sprite data buffer')
-        # VBO of sprite verticies, the same for each sprite
-        # verticies form a simple square to render the sprite on
+        # VBO of sprite verticies (the same for each sprite)
         self.sprite_data_vbo = ConstBufferObject(
-            usage=GL_STATIC_DRAW, # indicates doesn't change but used often
+            usage=GL_STATIC_DRAW,
             target=GL_ARRAY_BUFFER,
             data=np.array(
-                [([-1.0,  1.0], [0.0, 1.0]), # [x, y], [u, v]
+                [([-1.0,  1.0], [0.0, 1.0]),
                  ([-1.0, -1.0], [0.0, 0.0]),
                  ([ 1.0,  1.0], [1.0, 1.0]),
                  ([ 1.0, -1.0], [1.0, 0.0])],
@@ -115,7 +99,7 @@ class SimulationView(QOpenGLWidget):
         glUseProgram(0)
 
         print('Starting animation timer')
-        # timer fires every 1000 / FPS milliseconds
+        # interval-> (1000/FPS) milliseconds
         self.last_update_time = time.time() - 1 / self.fps
         self.ani_timer = QTimer(self)
         self.ani_timer.setInterval(1000 / self.fps)
@@ -124,24 +108,16 @@ class SimulationView(QOpenGLWidget):
 
         self.last_profiler_print_time = time.time()
 
-        # start paused
         self.paused = True
 
-        print('Done initializing')
+        print('initializing successful')
 
     def update(self):
-        """
-        Simulation view update.
-        Called on update timer timeout.
-        Updates one frame of the animation.
-        """
+        """Updates one frame of animation."""
         t = time.time()
-        # dt is change in time since last update
         dt = t - self.last_update_time
         self.last_update_time = t
 
-
-        # only update simulation if not paused
         if not self.paused:
             self.sim.update(dt)
 
@@ -149,10 +125,7 @@ class SimulationView(QOpenGLWidget):
 
 
     def paintGL(self):
-        """
-        Overrides QOpenGLWidget.paintGL
-        Called when OpenGL is ready to paint a single frame
-        """
+        """Overwriting QOpenGLWidget.paintGL ( Called when OpenGL is ready to paint a frame)"""
 
         # clear to black
         glClearColor(0.0, 0.0, 0.0, 1.0)
@@ -161,26 +134,15 @@ class SimulationView(QOpenGLWidget):
         glUseProgram(self.shader)
         glBindVertexArray(self.particles_vao)
 
-        # update camera and send camera matricies to shader
+        #-------------------------camera------------------------
         self.camera.update()
         glUniformMatrix4fv(self.view_loc, 1, GL_TRUE, self.camera.view.astype(np.float32))
         glUniformMatrix4fv(self.proj_loc, 1, GL_TRUE, self.camera.proj.astype(np.float32))
 
-        # sort particles by distance from the camera so they render in the proper order
-        # particles closest to the camera should be drawn last
         p = self.sim.particles_ssbo.data
-        # p[:]['position'] - self.camera.eye makes an array of particle displacements
-        # np.square squares each x, y, z of each displacement
-        # np.sum(..., axis=1) sums each squared x, y, z of each displacement
-        # - reverses the sort
-        # np.argsort gets sort indicies from input which is negative squared-distance from camera
-        # p[index array] rearranges array according to indicies provided
-        # p[:] = ... fills array in place
+
         p[:] = p[np.argsort(-np.sum(np.square(p[:]['position'] - self.camera.eye), axis=1))]
 
-        # instanced rendering
-        # this draws the same set of verticies for each particle,
-        # much faster and more memory efficient than supplying verticies for each particle
         glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, self.sprite_data_vbo.length, self.sim.num_particles)
         # wait for drawing to finish
         gl_sync()
