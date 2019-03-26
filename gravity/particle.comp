@@ -1,57 +1,44 @@
 #version 450 core
 
-// specify work group size
-layout(local_size_x = 256) in;
+layout(local_size_x = 256) in;                                                  // Work group size
 
 uniform float gravity_constant;
 uniform uint num_particles;
-uniform float dt; // timestep
+uniform float dt;
 
-// particle data buffer
-layout(std430, binding=0) buffer particles_buffer {
+layout(std430, binding=0) buffer particles_buffer {                             // particle data buffer
     vec4 particles[];
 };
 
 void main() {
-    uint pid = gl_GlobalInvocationID.x; // current particle
-    uint pid2; // other particle to calc force against
+    uint pid = gl_GlobalInvocationID.x;                                         // working particle
+    uint pid2;                                                                  // rest of the particles
 
-    // if went past number of particles, skip
     if (pid >= num_particles) return;
 
-    // get current position and velocity
-    vec3 pos = particles[pid * 2    ].xyz;
+    vec3 pos = particles[pid * 2    ].xyz;                                      //Current postion and vel.
     vec3 vel = particles[pid * 2 + 1].xyz;
 
-    // initialize acceleration
     vec3 acc = vec3(0.0);
 
-    // loop through every particle
-    for (pid2 = 0; pid2 < num_particles; pid2++) {
-        // if we're at this same particle, skip
+    for (pid2 = 0; pid2 < num_particles; pid2++) {                              // Looping through every particle
         if (pid2 == pid) continue;
-
-        // get other particle's position and mass
-        vec3  pos2  = particles[pid2 * 2].xyz;
+        vec3  pos2  = particles[pid2 * 2].xyz;                                  //mass and postion for other particles
         float mass2 = particles[pid2 * 2].w;
 
-        // calculate acceleration due to gravity on this particle
         vec3 dpos = pos2 - pos;
         float dist_sq = dot(dpos, dpos);
-        acc += (mass2 / sqrt(dist_sq * dist_sq * dist_sq)) * dpos;
+        acc += (mass2 / sqrt(dist_sq * dist_sq * dist_sq)) * dpos;              //Acc. calculation
     }
 
-    // synchronize with other threads
-    // ensure that all threads are done reading particle data before continuing
+//*****************************SYNCHRONIZATION**********************************
     barrier();
     memoryBarrier();
 
-    // update velocity and position
-    acc *= gravity_constant;
+    acc *= gravity_constant;                                                    //Vel. and position update
     vel += acc * dt;
     pos += vel * dt;
 
-    // store new values
     particles[pid * 2    ].xyz = pos;
     particles[pid * 2 + 1].xyz = vel;
 }
