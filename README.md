@@ -7,10 +7,12 @@ By carefully modelling the system, almost any case can be simulated on the engin
 The engine demonstrates the gravitaional interactions between the bodies and their resulting trajectories.
 
 To install the requirements - 
-              pip3 install -r requirements.txt
+
+####              pip3 install -r requirements.txt
               
-To execute - 
-              python3 -m nbody 
+To execute -
+
+###             python3 -m nbody 
 
 After executing the above command a window appears which represents the initial positions of the particles where the observer is at the X-axis.
 
@@ -34,18 +36,31 @@ Next N lines: Radius of N particles
 
 Sample input:
       3
+
       0 0 0
+      
       20 0 0
+      
       -20 0 0
+      
       0 0 0
+      
       0 8 0
+      
       0 -8 0
+      
       10
+      
       10
+      
       10
+      
       5
+      
       5
+      
       5
+      
 The correspondind model for this input: 
 
 ![example](https://github.com/namansinghal98/GravitySimulator-Computer-Graphics-/blob/master/Screenshot%20from%202019-04-07%2022-47-36.png)
