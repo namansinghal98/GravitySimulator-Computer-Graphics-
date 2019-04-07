@@ -8,7 +8,7 @@ The engine demonstrates the gravitaional interactions between the bodies and the
 
 To install the requirements - 
 
-####              pip3 install -r requirements.txt
+###              pip3 install -r requirements.txt
               
 To execute -
 
@@ -35,6 +35,7 @@ Next N lines: Radius of N particles
 
 
 Sample input:
+      
       3
 
       0 0 0
