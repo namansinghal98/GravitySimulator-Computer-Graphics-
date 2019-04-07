@@ -10,7 +10,7 @@ from .gl_util import *
 class NBodySimulation(object):
 
     num_particles = 3
-    collision_overlap = 0.25 # Currently not used
+    collision_overlap = 0.25
     gravity_constant = 100.0
     particle_mass = 1.0e1 
     particle_radius = 5.0 
@@ -46,6 +46,8 @@ class NBodySimulation(object):
 
         galaxy_positions = np.empty((self.num_particles, 3), dtype=np.float)
         galaxy_velocities = np.empty((self.num_particles, 3), dtype=np.float)
+        galaxy_mass = np.empty((self.num_particles, 1), dtype=np.float)
+        galaxy_radius = np.empty((self.num_particles, 1), dtype=np.float)
 
         def is_float(n):
             try:
@@ -63,18 +65,32 @@ class NBodySimulation(object):
             s1 = input_file.readline()
             y = [float(n) for n in s1.split(' ') if is_float(n)]
             vel[:] = y[:]
-            
+        
+        for mas in galaxy_mass:
+            s1 = input_file.readline()
+            y = [float(n) for n in s1.split(' ') if is_float(n)]
+            mas[:] = y[:]
+
+
+        for rad in galaxy_radius:
+            s1 = input_file.readline()
+            y = [float(n) for n in s1.split(' ') if is_float(n)]
+            rad[:] = y[:]
+        
             
         galaxy_positions = iter(galaxy_positions)
         galaxy_velocities = iter(galaxy_velocities)
+        galaxy_mass = iter(galaxy_mass)
+        galaxy_radius = iter(galaxy_radius)
+
 
         particles = iter(self.particles_ssbo.data)
         for _ in range(self.num_particles):
             center_star = next(particles)
             center_star['position'] = next(galaxy_positions)
-            center_star['mass'] = self.particle_mass
+            center_star['mass'] = next(galaxy_mass)
             center_star['velocity'] = next(galaxy_velocities)
-            center_star['radius'] = self.particle_radius
+            center_star['radius'] = next(galaxy_radius)
 
         glUseProgram(0)
 
