@@ -13,7 +13,7 @@ class NBodySimulation(object):
     collision_overlap = 0.25 # Currently not used
     gravity_constant = 100.0
     particle_mass = 1.0e1 
-    particle_radius = 3.0 
+    particle_radius = 5.0 
     filename = 'input.txt'
 
     def __init__(self):

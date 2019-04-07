@@ -12,6 +12,8 @@ from OpenGL.GL import shaders
 
 from PyQt5.QtCore import Qt, QSize, QTimer
 from PyQt5.QtWidgets import QOpenGLWidget
+from PyQt5.QtWidgets import QLabel
+from PyQt5.QtWidgets import QVBoxLayout
 
 from .sim import NBodySimulation
 from . import util
@@ -28,6 +30,14 @@ class SimulationView(QOpenGLWidget):
         self.setFocusPolicy(Qt.StrongFocus)
         # focus widget for keyboard controls
         self.setFocus(True)
+
+
+        self.layout = QVBoxLayout()
+        self.label = QLabel("Hello There")
+
+        self.layout.addWidget(self.label)
+        self.setLayout(self.layout)
+
 
         self.size = QSize(800, 500)
 
@@ -64,6 +74,12 @@ class SimulationView(QOpenGLWidget):
         self.view_loc = glGetUniformLocation(self.shader, 'view')
         self.proj_loc = glGetUniformLocation(self.shader, 'proj')
 
+        # self.object_Color = glGetUniformLocation(self.shader, 'objectColor')
+        # self.light_Color = glGetUniformLocation(self.shader, 'lightColor')
+
+        # self.objectColor = (1.0,0.5,0.31);
+        # self.light_Color = (1.0,1.0,1.0);
+
         glUniform1f(glGetUniformLocation(self.shader, 'collision_overlap'), self.sim.collision_overlap)
         glUniform1ui(glGetUniformLocation(self.shader, 'color_mode'), 1)
 
@@ -87,6 +103,7 @@ class SimulationView(QOpenGLWidget):
             vbo=self.sprite_data_vbo,
             shader=self.shader,
             attr_prefix='sprite_')
+
 
         # bind shader attributes for particle data
         setup_vbo_attrs(
