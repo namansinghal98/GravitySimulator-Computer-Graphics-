@@ -12,7 +12,7 @@ To install the requirements -
               
 To execute -
 
-###             python3 -m nbody 
+###             python3 -m gravity
 
 After executing the above command a window appears which represents the initial positions of the particles where the observer is at the X-axis.
 
