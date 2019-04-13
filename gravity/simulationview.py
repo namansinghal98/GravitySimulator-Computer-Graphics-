@@ -10,6 +10,8 @@ OpenGL.FULL_LOGGING = True
 from OpenGL.GL import *
 from OpenGL.GL import shaders
 
+
+from PyQt5 import QtGui, QtWidgets
 from PyQt5.QtCore import Qt, QSize, QTimer
 from PyQt5.QtWidgets import QOpenGLWidget
 from PyQt5.QtWidgets import QLabel
@@ -24,20 +26,15 @@ class SimulationView(QOpenGLWidget):
     fps = 60
     profiler_print_interval = 1.0
 
+    xcor = 0
+    ycor = 0
+
     def __init__(self, parent):
         super().__init__(parent)
 
         self.setFocusPolicy(Qt.StrongFocus)
         # focus widget for keyboard controls
         self.setFocus(True)
-
-
-        self.layout = QVBoxLayout()
-        self.label = QLabel("Hello There")
-
-        self.layout.addWidget(self.label)
-        self.setLayout(self.layout)
-
 
         self.size = QSize(800, 500)
 
@@ -161,11 +158,10 @@ class SimulationView(QOpenGLWidget):
         p[:] = p[np.argsort(-np.sum(np.square(p[:]['position'] - self.camera.eye), axis=1))]
 
         glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, self.sprite_data_vbo.length, self.sim.num_particles)
-        # wait for drawing to finish
         gl_sync()
-
         glBindVertexArray(0)
         glUseProgram(0)
+
 
 
     def resizeGL(self, width, height):
@@ -186,6 +182,9 @@ class SimulationView(QOpenGLWidget):
             # save drag starting mouse position and camera position
             self.drag_mouse_start = event.pos()
             self.drag_cam_start = (self.camera.azimuth, self.camera.zenith)
+
+
+
 
     def mouseMoveEvent(self, event):
         """
